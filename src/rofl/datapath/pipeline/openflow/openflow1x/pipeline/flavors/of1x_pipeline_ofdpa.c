@@ -889,6 +889,29 @@ rofl_result_t __ofdpa_set_policy_acl_table_defaults(of1x_flow_table_t* table){
 					//(1 << OF1X_IT_METER) |
 					(1 << OF1X_IT_GOTO_TABLE);
 
+	//Fill in default flow entry for TABLE-MISS
+	{
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 0;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//No matches => wildcard on all unmatched frames seen so far in this table
+
+		//No instructions => just execute action set stored for the packet so far
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->table_index, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
 	return ROFL_SUCCESS;
 }
 
