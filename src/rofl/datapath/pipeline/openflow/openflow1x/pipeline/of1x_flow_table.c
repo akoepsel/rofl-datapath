@@ -463,7 +463,7 @@ rofl_of1x_fm_result_t __of1x_add_flow_entry_table(of1x_pipeline_t *const pipelin
 	}
 	//Verify table_id
 	if(unlikely(table == NULL)){
-		ROFL_PIPELINE_ERR("[flowmod-add(%p)] ERROR: invalid table id %u > switch max table id: %u\n", *entry, table_id, pipeline->num_of_tables-1);
+		ROFL_PIPELINE_ERR("[flowmod-add(%p)] ERROR: invalid table id %u, table not found\n", *entry, table_id);
 		return ROFL_OF1X_FM_INVALID_TABLE_ID;
 	}
 
@@ -533,7 +533,7 @@ rofl_of1x_fm_result_t of1x_modify_flow_entry_table(of1x_pipeline_t *const pipeli
 	}
 	//Verify table_id
 	if(unlikely(table == NULL)){
-		ROFL_PIPELINE_ERR("[flowmod-modify(%p)] ERROR: invalid table id %u > switch max table id: %u\n", *entry, table_id, pipeline->num_of_tables-1);
+		ROFL_PIPELINE_ERR("[flowmod-modify(%p)] ERROR: invalid table id %u, table not found\n", *entry, table_id);
 		return ROFL_OF1X_FM_INVALID_TABLE_ID;
 	}
 
@@ -611,7 +611,7 @@ rofl_of1x_fm_result_t of1x_remove_flow_entry_table(of1x_pipeline_t *const pipeli
 	}
 	//Verify table_id
 	if(unlikely(table == NULL)){
-		ROFL_PIPELINE_ERR("[flowmod-remove(%p)] ERROR: invalid table id %u > switch max table id: %u\n", entry, table_id, pipeline->num_of_tables-1);
+		ROFL_PIPELINE_ERR("[flowmod-remove(%p)] ERROR: invalid table id %u, table not found\n", *entry, table_id);
 		return ROFL_OF1X_FM_INVALID_TABLE_ID;
 	}
 
