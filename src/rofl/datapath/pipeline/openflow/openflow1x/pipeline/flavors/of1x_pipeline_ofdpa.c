@@ -804,6 +804,7 @@ rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* ta
 rofl_result_t __ofdpa_set_policy_acl_table_defaults(of1x_flow_table_t* table){
 
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
+	of1x_flow_entry_t *entry;
 
 	bitmap256_clean(goto_tables);
 	//bitmap256_set(goto_tables, OFDPA_COLOR_BASED_ACTIONS_FLOW_TABLE);
