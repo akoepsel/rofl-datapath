@@ -403,7 +403,7 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 				NULL,
 				/*go_to_table*/OFDPA_VLAN_FLOW_TABLE);
 
-		if (of1x_add_flow_entry_table(table->pipeline, table->table_index, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
 			return ROFL_FAILURE;
 		}
 	}
@@ -480,7 +480,7 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 				NULL,
 				0);
 
-		if (of1x_add_flow_entry_table(table->pipeline, table->table_index, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
 			return ROFL_FAILURE;
 		}
 	}
