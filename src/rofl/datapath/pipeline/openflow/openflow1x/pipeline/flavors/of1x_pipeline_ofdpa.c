@@ -497,6 +497,7 @@ rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table){
 
 	bitmap256_set(goto_tables, OFDPA_VLAN1_FLOW_TABLE);
 	bitmap256_set(goto_tables, OFDPA_TERMINATION_MAC_FLOW_TABLE);
+	bitmap256_set(goto_tables, OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//no continuation in next table
 	table->table_index_next = 0;
@@ -541,6 +542,36 @@ rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table){
 					(1 << OF1X_IT_WRITE_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
 
+	//Fill in default flow entry for non-matching ethernet frames
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 0;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
 	return ROFL_SUCCESS;
 }
 
@@ -552,6 +583,7 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 	bitmap256_clean(goto_tables);
 
 	bitmap256_set(goto_tables, OFDPA_TERMINATION_MAC_FLOW_TABLE);
+	bitmap256_set(goto_tables, OFDPA_POLICY_ACL_FLOW_TABLE);
 	//bitmap256_set(goto_tables, OFDPA_MAINTENANCE_POINT_FLOW_TABLE);
 	//bitmap256_set(goto_tables, OFDPA_MPLS_L2_PORT_FLOW_TABLE);
 
@@ -597,6 +629,70 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 					(1 << OF1X_IT_APPLY_ACTIONS) |
 					(1 << OF1X_IT_WRITE_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
+
+	/* The VLAN 1 Flow Table has a built-in default rule to restore the frame (i.e., push back the OVID tag) and a
+     * Goto-Table instruction specifying the Policy ACL Flow Table. */
+
+	//Fill in default flow entry for non-matching ethernet frames
+	{
+		of1x_flow_entry_t *entry;
+		of1x_packet_action_t *action;
+		of1x_action_group_t *apply_actions;
+		wrap_uint_t field;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 0;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Create action group for APPLY_ACTIONS
+		if((apply_actions=of1x_init_action_group(0))==NULL){
+			return ROFL_FAILURE;
+		}
+
+		//Action PUSH_VLAN
+		field.u16 = ETH_TYPE_VLAN_CTAG_8100;
+		if((action=of1x_init_packet_action(OF1X_AT_PUSH_VLAN, field, 0x0))==NULL){
+			return ROFL_FAILURE;
+		}
+		of1x_push_packet_action_to_group(apply_actions, action);
+
+		//Action SET_VLAN_VID=<Outer-VID>
+		field.u16 = 0;
+		if((action=of1x_init_packet_action(OF1X_AT_SET_FIELD_OFDPA_OVID, field, 0x0))==NULL){
+			return ROFL_FAILURE;
+		}
+		of1x_push_packet_action_to_group(apply_actions, action);
+
+		//Instruction APPLY_ACTIONS
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_APPLY_ACTIONS,
+				apply_actions,
+				NULL,
+				NULL,
+				0);
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
 
 	return ROFL_SUCCESS;
 }
