@@ -590,7 +590,14 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 			pkt->__vrf = action->__field.u16;
 			break;
 		case OF1X_AT_SET_FIELD_OFDPA_OVID:
-			pkt->__ovid = action->__field.u16;
+			//For 1.0 we must first push it if we don't have. wtf...
+			if(!platform_packet_has_vlan(pkt)){
+				//Push VLAN
+				platform_packet_push_vlan(pkt, ETH_TYPE_8021Q_STAG);
+				platform_packet_set_vlan_pcp(pkt, 0x0);
+			}
+			//Call platform
+			platform_packet_set_vlan_vid(pkt, pkt->__ovid);
 			break;
 		case OF1X_AT_SET_FIELD_OFDPA_ALLOW_VLAN_TRANSLATION:
 			pkt->__allow_vlan_translation = action->__field.u8;

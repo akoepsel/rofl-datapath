@@ -657,14 +657,7 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 			return ROFL_FAILURE;
 		}
 
-		//Action PUSH_VLAN
-		field.u16 = ETH_TYPE_VLAN_CTAG_8100;
-		if((action=of1x_init_packet_action(OF1X_AT_PUSH_VLAN, field, 0x0))==NULL){
-			return ROFL_FAILURE;
-		}
-		of1x_push_packet_action_to_group(apply_actions, action);
-
-		//Action SET_VLAN_VID=<Outer-VID>
+		//Action SET_OFDPA_OVID=<Outer-VID>
 		field.u16 = 0;
 		if((action=of1x_init_packet_action(OF1X_AT_SET_FIELD_OFDPA_OVID, field, 0x0))==NULL){
 			return ROFL_FAILURE;
