@@ -1077,7 +1077,7 @@ rofl_result_t __ofdpa_set_bridging_table_defaults(of1x_flow_table_t* table){
 			return ROFL_FAILURE;
 		}
 
-		entry->priority = 3;
+		entry->priority = 0;
 		entry->cookie = 0ULL;
 		entry->cookie_mask = 0ULL;
 		entry->flags = 0;
@@ -1156,7 +1156,7 @@ rofl_result_t __ofdpa_set_unicast_routing_table_defaults(of1x_flow_table_t* tabl
 			return ROFL_FAILURE;
 		}
 
-		entry->priority = 3;
+		entry->priority = 0;
 		entry->cookie = 0ULL;
 		entry->cookie_mask = 0ULL;
 		entry->flags = 0;
@@ -1239,7 +1239,7 @@ rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* ta
 			return ROFL_FAILURE;
 		}
 
-		entry->priority = 3;
+		entry->priority = 0;
 		entry->cookie = 0ULL;
 		entry->cookie_mask = 0ULL;
 		entry->flags = 0;
