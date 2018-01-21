@@ -858,13 +858,13 @@ rofl_result_t __ofdpa_set_l3_type_table_defaults(of1x_flow_table_t* table){
 
 	//Match
 	bitmap128_clean(&table->config.match);
-	bitmap128_set(&table->config.match, OF1X_MATCH_ETH_DST);
+	bitmap128_set(&table->config.match, OF1X_MATCH_ETH_TYPE);
 	bitmap128_set(&table->config.match, OF1X_MATCH_IPV4_DST);
 	bitmap128_set(&table->config.match, OF1X_MATCH_IPV6_DST);
 
 	//Wildcards
 	bitmap128_clean(&table->config.wildcards);
-	bitmap128_set(&table->config.wildcards, OF1X_MATCH_ETH_DST);
+	bitmap128_set(&table->config.wildcards, OF1X_MATCH_ETH_TYPE);
 	bitmap128_set(&table->config.wildcards, OF1X_MATCH_IPV4_DST);
 	bitmap128_set(&table->config.wildcards, OF1X_MATCH_IPV6_DST);
 
