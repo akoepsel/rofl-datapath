@@ -295,7 +295,7 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 	bitmap256_clean(goto_tables);
 
 	bitmap256_set(goto_tables, OFDPA_VLAN_FLOW_TABLE);
-	bitmap256_set(goto_tables, OFDPA_BRIDGING_FLOW_TABLE);
+	bitmap256_set(goto_tables, OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//no continuation in next table, INGRESS_PORT table uses a default flow entry (see below)
 	table->table_index_next = 0;
@@ -398,7 +398,7 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 				NULL,
 				NULL,
 				NULL,
-				/*go_to_table*/OFDPA_VLAN_FLOW_TABLE);
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
 
 		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
 			return ROFL_FAILURE;
