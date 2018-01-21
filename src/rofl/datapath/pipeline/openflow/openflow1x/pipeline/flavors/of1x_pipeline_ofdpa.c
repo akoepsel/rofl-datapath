@@ -255,6 +255,7 @@ rofl_result_t __ofdpa_set_table_defaults(of1x_flow_table_t* table){
 	case OFDPA_EGRESS_VLAN1_FLOW_TABLE:
 		return __ofdpa_set_egress_vlan1_table_defaults(table);
 	default:{
+		snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Table-%d", table->number);
 		bitmap256_t *goto_tables = &(table->config.goto_tables);
 		bitmap256_clean(goto_tables);
 
@@ -290,6 +291,7 @@ rofl_result_t __ofdpa_set_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Ingress Port");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -535,6 +537,7 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "VLAN");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -631,6 +634,7 @@ rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "VLAN 1");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -762,6 +766,7 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_termination_mac_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Termination MAC");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -844,6 +849,7 @@ rofl_result_t __ofdpa_set_termination_mac_table_defaults(of1x_flow_table_t* tabl
 
 rofl_result_t __ofdpa_set_l3_type_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "L3 Type");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -1018,6 +1024,7 @@ rofl_result_t __ofdpa_set_l3_type_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_bridging_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Bridging");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -1096,6 +1103,7 @@ rofl_result_t __ofdpa_set_bridging_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_unicast_routing_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Unicast Routing");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -1174,6 +1182,7 @@ rofl_result_t __ofdpa_set_unicast_routing_table_defaults(of1x_flow_table_t* tabl
 
 rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Multicast Routing");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -1256,6 +1265,7 @@ rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* ta
 
 rofl_result_t __ofdpa_set_policy_acl_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Policy ACL");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 	of1x_flow_entry_t *entry;
 
@@ -1372,6 +1382,7 @@ rofl_result_t __ofdpa_set_policy_acl_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_egress_vlan_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Egress VLAN");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
@@ -1425,6 +1436,7 @@ rofl_result_t __ofdpa_set_egress_vlan_table_defaults(of1x_flow_table_t* table){
 
 rofl_result_t __ofdpa_set_egress_vlan1_table_defaults(of1x_flow_table_t* table){
 
+	snprintf(table->name, OF1X_MAX_TABLE_NAME_LEN, "Egress VLAN 1");
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
 
 	bitmap256_clean(goto_tables);
