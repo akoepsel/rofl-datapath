@@ -1024,7 +1024,7 @@ rofl_result_t __ofdpa_set_bridging_table_defaults(of1x_flow_table_t* table){
 	bitmap256_set(goto_tables, OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//continue in OFDPA_POLICY_ACL_FLOW_TABLE (table_index=12)
-	table->table_index_next = 12;
+	table->table_index_next = __of1x_get_ofdpa_table_index_for_table_number(OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//Set default behaviour MISS continue
 	table->default_action = OF1X_TABLE_MISS_CONTINUE;
@@ -1102,7 +1102,7 @@ rofl_result_t __ofdpa_set_unicast_routing_table_defaults(of1x_flow_table_t* tabl
 	bitmap256_set(goto_tables, OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//continue in OFDPA_POLICY_ACL_FLOW_TABLE (table_index=12)
-	table->table_index_next = 12;
+	table->table_index_next = __of1x_get_ofdpa_table_index_for_table_number(OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//Set default behaviour MISS continue
 	table->default_action = OF1X_TABLE_MISS_CONTINUE;
@@ -1180,7 +1180,7 @@ rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* ta
 	bitmap256_set(goto_tables, OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//continue in OFDPA_POLICY_ACL_FLOW_TABLE (table_index=12)
-	table->table_index_next = 12;
+	table->table_index_next = __of1x_get_ofdpa_table_index_for_table_number(OFDPA_POLICY_ACL_FLOW_TABLE);
 
 	//Set default behaviour MISS continue
 	table->default_action = OF1X_TABLE_MISS_CONTINUE;
