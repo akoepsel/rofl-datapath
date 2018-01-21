@@ -55,6 +55,7 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table);
 rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table);
 rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table);
 rofl_result_t __ofdpa_set_termination_mac_table_defaults(of1x_flow_table_t* table);
+rofl_result_t __ofdpa_set_l3_type_table_defaults(of1x_flow_table_t* table);
 rofl_result_t __ofdpa_set_bridging_table_defaults(of1x_flow_table_t* table);
 rofl_result_t __ofdpa_set_unicast_routing_table_defaults(of1x_flow_table_t* table);
 rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* table);

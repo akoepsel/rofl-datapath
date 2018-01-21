@@ -21,6 +21,7 @@ ofdpa_table_setting_t ofdpa_table_settings[] = {
 	{ OFDPA_VLAN1_FLOW_TABLE, of1x_loop_matching_algorithm},
 	{ OFDPA_MPLS_L2_PORT_FLOW_TABLE, of1x_loop_matching_algorithm}, //TODO
 	{ OFDPA_TERMINATION_MAC_FLOW_TABLE, of1x_loop_matching_algorithm},
+	{ OFPDA_L3_TYPE_FLOW_TABLE, of1x_loop_matching_algorithm},
 	{ OFDPA_MPLS0_FLOW_TABLE, of1x_loop_matching_algorithm}, //TODO
 	{ OFDPA_MPLS1_FLOW_TABLE, of1x_loop_matching_algorithm}, //TODO
 	{ OFDPA_MPLS2_FLOW_TABLE, of1x_loop_matching_algorithm}, //TODO
@@ -34,6 +35,16 @@ ofdpa_table_setting_t ofdpa_table_settings[] = {
 	{ OFDPA_EGRESS_VLAN1_FLOW_TABLE, of1x_loop_matching_algorithm},
 	{ OFDPA_EGRESS_MAINTENANCE_POINT_FLOW_TABLE, of1x_loop_matching_algorithm},
 	{ OFDPA_SOURCE_MAC_LEARNING_FLOW_TABLE, of1x_loop_matching_algorithm},
+};
+
+unsigned int __of1x_get_ofdpa_table_index_for_table_number(unsigned int table_number){
+	unsigned int i;
+	for (i = 0; i < sizeof(ofdpa_table_settings)/sizeof(ofdpa_table_setting_t); i++){
+		if (ofdpa_table_settings[i].table_number==table_number){
+			return i;
+		}
+	}
+	return 0;
 };
 
 rofl_result_t __of1x_init_pipeline_ofdpa(struct of1x_pipeline* pipeline, const unsigned int num_of_tables_ignored, enum of1x_matching_algorithm_available* list_ignored){
@@ -229,6 +240,8 @@ rofl_result_t __ofdpa_set_table_defaults(of1x_flow_table_t* table){
 		return __ofdpa_set_vlan1_table_defaults(table);
 	case OFDPA_TERMINATION_MAC_FLOW_TABLE:
 		return __ofdpa_set_termination_mac_table_defaults(table);
+	case OFPDA_L3_TYPE_FLOW_TABLE:
+		return __ofdpa_set_l3_type_table_defaults(table);
 	case OFDPA_BRIDGING_FLOW_TABLE:
 		return __ofdpa_set_bridging_table_defaults(table);
 	case OFDPA_UNICAST_ROUTING_FLOW_TABLE:
@@ -278,8 +291,6 @@ rofl_result_t __ofdpa_set_table_defaults(of1x_flow_table_t* table){
 rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 
 	bitmap256_t *goto_tables = &(table->config.goto_tables);
-	of1x_flow_entry_t *entry;
-	of1x_match_t *match;
 
 	bitmap256_clean(goto_tables);
 
@@ -325,8 +336,11 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 					(1 << OF1X_IT_GOTO_TABLE);
 
 
-	//Fill in default flow entry for non datacenter ethernet frames
+	//"Built-in Normal Ethernet VLAN"
 	{
+		of1x_flow_entry_t *entry;
+		of1x_match_t *match;
+
 		//Create flow entry
 		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
 			return ROFL_FAILURE;
@@ -346,6 +360,36 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
 			return ROFL_FAILURE;
 		}
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_VLAN_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
+	//"Table miss"
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 0;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
 
 		//Instruction GOTO_TABLE
 		of1x_add_instruction_to_group(
@@ -542,7 +586,7 @@ rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table){
 					(1 << OF1X_IT_WRITE_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
 
-	//Fill in default flow entry for non-matching ethernet frames
+	//"Table miss"
 	{
 		of1x_flow_entry_t *entry;
 
@@ -557,6 +601,15 @@ rofl_result_t __ofdpa_set_vlan_table_defaults(of1x_flow_table_t* table){
 		entry->flags = 0;
 		entry->timer_info.idle_timeout = 0;
 		entry->timer_info.hard_timeout = 0;
+
+		//Instruction CLEAR_ACTIONS
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_CLEAR_ACTIONS,
+				NULL,
+				NULL,
+				NULL,
+				0);
 
 		//Instruction GOTO_TABLE
 		of1x_add_instruction_to_group(
@@ -657,9 +710,16 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 			return ROFL_FAILURE;
 		}
 
+		//Action PUSH_VLAN as first action of new_action_group
+		field.u16 = ETH_TYPE_VLAN_CTAG_8100;
+		if((action=of1x_init_packet_action(OF1X_AT_PUSH_VLAN, field, 0x0))==NULL){
+			return ROFL_OF1X_FM_FAILURE;
+		}
+		of1x_push_packet_action_to_group(apply_actions, action);
+
 		//Action SET_OFDPA_OVID=<Outer-VID>
 		field.u16 = 0;
-		if((action=of1x_init_packet_action(OF1X_AT_SET_FIELD_OFDPA_OVID, field, 0x0))==NULL){
+		if((action=of1x_init_packet_action(OF1X_AT_SET_FIELD_OFDPA_OVID, field, 0x0))==NULL){ //TODO: OFPVID_PRESENT???
 			return ROFL_FAILURE;
 		}
 		of1x_push_packet_action_to_group(apply_actions, action);
@@ -669,6 +729,15 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 				&(entry->inst_grp),
 				OF1X_IT_APPLY_ACTIONS,
 				apply_actions,
+				NULL,
+				NULL,
+				0);
+
+		//Instruction CLEAR_ACTIONS
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_CLEAR_ACTIONS,
+				NULL,
 				NULL,
 				NULL,
 				0);
@@ -699,9 +768,10 @@ rofl_result_t __ofdpa_set_termination_mac_table_defaults(of1x_flow_table_t* tabl
 	bitmap256_set(goto_tables, OFDPA_BRIDGING_FLOW_TABLE);
 	bitmap256_set(goto_tables, OFDPA_UNICAST_ROUTING_FLOW_TABLE);
 	bitmap256_set(goto_tables, OFDPA_MULTICAST_ROUTING_FLOW_TABLE);
+	bitmap256_set(goto_tables, OFPDA_L3_TYPE_FLOW_TABLE);
 
 	//continue in OFDPA_BRIDGING_FLOW_TABLE (table_index=11)
-	table->table_index_next = 11;
+	table->table_index_next = __of1x_get_ofdpa_table_index_for_table_number(OFDPA_BRIDGING_FLOW_TABLE);
 
 	//Set default behaviour MISS continue
 	table->default_action = OF1X_TABLE_MISS_CONTINUE;
@@ -737,6 +807,210 @@ rofl_result_t __ofdpa_set_termination_mac_table_defaults(of1x_flow_table_t* tabl
 	table->config.instructions =
 					(1 << OF1X_IT_APPLY_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
+
+	//"Default"
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 0;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_BRIDGING_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
+	return ROFL_SUCCESS;
+}
+
+
+rofl_result_t __ofdpa_set_l3_type_table_defaults(of1x_flow_table_t* table){
+
+	bitmap256_t *goto_tables = &(table->config.goto_tables);
+
+	bitmap256_clean(goto_tables);
+	bitmap256_set(goto_tables, OFDPA_UNICAST_ROUTING_FLOW_TABLE);
+	bitmap256_set(goto_tables, OFDPA_MULTICAST_ROUTING_FLOW_TABLE);
+
+	//continue in OFDPA_POLICY_ACL_FLOW_TABLE (table_index=12)
+	table->table_index_next = __of1x_get_ofdpa_table_index_for_table_number(OFDPA_POLICY_ACL_FLOW_TABLE);
+
+	//Set default behaviour MISS continue
+	table->default_action = OF1X_TABLE_MISS_CONTINUE;
+
+	//Match
+	bitmap128_clean(&table->config.match);
+	bitmap128_set(&table->config.match, OF1X_MATCH_ETH_DST);
+	bitmap128_set(&table->config.match, OF1X_MATCH_IPV4_DST);
+	bitmap128_set(&table->config.match, OF1X_MATCH_IPV6_DST);
+
+	//Wildcards
+	bitmap128_clean(&table->config.wildcards);
+	bitmap128_set(&table->config.wildcards, OF1X_MATCH_ETH_DST);
+	bitmap128_set(&table->config.wildcards, OF1X_MATCH_IPV4_DST);
+	bitmap128_set(&table->config.wildcards, OF1X_MATCH_IPV6_DST);
+
+	//Apply actions
+	bitmap128_clean(&table->config.apply_actions);
+
+	//Write actions
+	bitmap128_clean(&table->config.write_actions);
+
+	//METADATA (full metadata support)
+	table->config.metadata_match = 0x0ULL;
+	table->config.metadata_write = 0x0ULL;
+
+	//Instructions
+	table->config.instructions =
+					(1 << OF1X_IT_GOTO_TABLE);
+
+	//"IPv4 Multicast IP"
+	{
+		of1x_flow_entry_t *entry;
+		of1x_match_t *match;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 3;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Match ETH-TYPE IPv4
+		const uint16_t eth_type_ipv4 = 0x0800;
+		if ((match = of1x_init_eth_type_match(eth_type_ipv4)) == NULL) {
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Match IPV4-DST 224.0.0.0/224.0.0.0
+		uint32_t addr = 224 << 24;
+		if ((match = of1x_init_ip4_dst_match(addr, /*mask=*/addr))==NULL){
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_MULTICAST_ROUTING_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
+	//"IPv6 Multicast IP"
+	{
+		of1x_flow_entry_t *entry;
+		of1x_match_t *match;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 3;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Match ETH-TYPE IPv6
+		const uint16_t eth_type_ipv6 = 0x86dd;
+		if ((match = of1x_init_eth_type_match(eth_type_ipv6)) == NULL) {
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Match IPV6-DST ff00::0/ff00:0
+		uint128__t addr;
+		UINT128__T_HI(addr) = UINT64_C(0xff) << (7*8);
+		UINT128__T_LO(addr) = 0x0;
+		if ((match = of1x_init_ip6_dst_match(addr, /*mask=*/addr))==NULL){
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_MULTICAST_ROUTING_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
+	//"Default miss"
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 3;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_UNICAST_ROUTING_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
 
 	return ROFL_SUCCESS;
 }
@@ -786,6 +1060,36 @@ rofl_result_t __ofdpa_set_bridging_table_defaults(of1x_flow_table_t* table){
 					(1 << OF1X_IT_WRITE_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
 
+	//"Table miss"
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 3;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
 	return ROFL_SUCCESS;
 }
 
@@ -833,6 +1137,36 @@ rofl_result_t __ofdpa_set_unicast_routing_table_defaults(of1x_flow_table_t* tabl
 					(1 << OF1X_IT_CLEAR_ACTIONS) |
 					(1 << OF1X_IT_WRITE_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
+
+	//"Table miss"
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 3;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
 
 	return ROFL_SUCCESS;
 }
@@ -885,6 +1219,36 @@ rofl_result_t __ofdpa_set_multicast_routing_table_defaults(of1x_flow_table_t* ta
 	table->config.instructions =
 					(1 << OF1X_IT_WRITE_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
+
+	//"Table miss"
+	{
+		of1x_flow_entry_t *entry;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 3;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
 
 	return ROFL_SUCCESS;
 }

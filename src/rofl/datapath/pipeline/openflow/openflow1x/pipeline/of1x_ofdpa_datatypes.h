@@ -22,6 +22,7 @@ typedef enum{
 	OFDPA_VLAN1_FLOW_TABLE = 11,                     /* VLAN1 Flow Table */
 	OFDPA_MPLS_L2_PORT_FLOW_TABLE = 13,              /* MPLS L2 Port Flow Table */
 	OFDPA_TERMINATION_MAC_FLOW_TABLE = 20,           /* Termination MAC Flow Table */
+	OFPDA_L3_TYPE_FLOW_TABLE = 21,					 /* L3 type Flow Table */
 	OFDPA_MPLS0_FLOW_TABLE = 23,                     /* MPLS0 FLow Table */
 	OFDPA_MPLS1_FLOW_TABLE = 24,                     /* MPLS1 FLow Table */
 	OFDPA_MPLS2_FLOW_TABLE = 25,                     /* MPLS2 FLow Table */
