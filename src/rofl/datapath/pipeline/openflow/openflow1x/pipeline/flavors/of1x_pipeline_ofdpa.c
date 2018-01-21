@@ -671,6 +671,7 @@ rofl_result_t __ofdpa_set_vlan1_table_defaults(of1x_flow_table_t* table){
 	bitmap128_set(&table->config.apply_actions, OF1X_AT_POP_VLAN);
 	//bitmap128_set(&table->config.apply_actions, OF1X_AT_SET_FIELD_OFDPA_MPLS_L2_PORT);
 	bitmap128_set(&table->config.apply_actions, OF1X_AT_SET_FIELD_TUNNEL_ID);
+	bitmap128_set(&table->config.apply_actions, OF1X_AT_SET_FIELD_OFDPA_OVID);
 	//bitmap128_set(&table->config.apply_actions, OF1X_AT_SET_FIELD_LMEP_ID);
 
 	//Write actions
