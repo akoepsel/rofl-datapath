@@ -464,8 +464,7 @@ of1x_action_group_t* of1x_init_action_group(of1x_packet_action_t* actions){
 	
 		for(;actions;actions=actions->next, number_of_actions++){
 
-			//if(actions->type == OF1X_AT_OUTPUT /*|| actions->type == OF1X_AT_GROUP*/)
-			if(actions->type == OF1X_AT_OUTPUT || actions->type == OF1X_AT_GROUP)
+			if(actions->type == OF1X_AT_OUTPUT /*|| actions->type == OF1X_AT_GROUP*/)
 				number_of_output_actions++;
 
 			if(!actions->next){
