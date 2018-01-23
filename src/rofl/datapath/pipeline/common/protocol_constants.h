@@ -27,7 +27,8 @@
 	#define ETH_TYPE_PPPOE_DISCOVERY	0x8863
 	#define ETH_TYPE_PPPOE_SESSION		0x8864
 	#define ETH_TYPE_ARP			0x0806
-	#define ETH_TYPE_PBB			0x88E7
+    #define ETH_TYPE_SLOW           0x8809
+    #define ETH_TYPE_PBB			0x88E7
 	
 	//VLAN values
 	#define VLAN_CTAG_ETHER_TYPE 0x8100
@@ -66,6 +67,7 @@
 	#define ETH_TYPE_PPPOE_DISCOVERY	0x6388
 	#define ETH_TYPE_PPPOE_SESSION		0x6488
 	#define ETH_TYPE_ARP			0x0608
+    #define ETH_TYPE_SLOW           0x0988
 	#define ETH_TYPE_PBB			0xE788
 	
 	//VLAN values

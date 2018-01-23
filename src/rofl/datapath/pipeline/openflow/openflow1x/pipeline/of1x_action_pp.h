@@ -678,6 +678,11 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 					return;
 				}
 				pkt_to_send->__cookie = pkt->__cookie;
+				pkt_to_send->__tunnel_id = pkt->__tunnel_id;
+				pkt_to_send->__vrf = pkt->__vrf;
+				pkt_to_send->__ovid = pkt->__ovid;
+				pkt_to_send->__allow_vlan_translation = pkt->__allow_vlan_translation;
+				pkt_to_send->__action_set_output_egress_portno = pkt->__action_set_output_egress_portno;
 				ROFL_PIPELINE_INFO("Packet[%p] was cloned into [%p] during OUTPUT action\n", pkt, pkt_to_send);
 				
 			}else
