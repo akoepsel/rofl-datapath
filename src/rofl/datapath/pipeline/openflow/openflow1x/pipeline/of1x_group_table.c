@@ -555,7 +555,7 @@ void of1x_dump_group(of1x_group_t* group, bool raw_nbo){
 	unsigned int i;
 	__of1x_stats_group_tid_t c;
 	
-	ROFL_PIPELINE_INFO_NO_PREFIX("id %u, ", group->id);
+	ROFL_PIPELINE_INFO_NO_PREFIX("id 0x%x, ", group->id);
 	switch(group->type){
 		case OF1X_GROUP_TYPE_ALL:
 			ROFL_PIPELINE_INFO_NO_PREFIX("GROUP_TYPE_ALL, ");
