@@ -309,6 +309,9 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 	bitmap128_clean(&table->config.match);
 	bitmap128_set(&table->config.match, OF1X_MATCH_IN_PORT);
 	bitmap128_set(&table->config.match, OF1X_MATCH_TUNNEL_ID);
+	//added for bisdn: magic builtin entry for LACP
+	bitmap128_set(&table->config.match, OF1X_MATCH_ETH_TYPE);
+
 	//extension for PUSH_VLAN
 	bitmap128_set(&table->config.match, OF1X_MATCH_VLAN_VID);
 
@@ -337,6 +340,92 @@ rofl_result_t __ofdpa_set_ingress_port_table_defaults(of1x_flow_table_t* table){
 					(1 << OF1X_IT_APPLY_ACTIONS) |
 					(1 << OF1X_IT_GOTO_TABLE);
 
+	//"BISDN: builtin flowmod entry for LACP"
+	{
+		of1x_flow_entry_t *entry;
+		of1x_match_t *match;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 1;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Match TUNNEL_ID==0 (for physical ports only)
+		if ((match = of1x_init_tunnel_id_match(/*tunnel_id=*/0, /*mask=*/OF1X_8_BYTE_MASK)) == NULL) {
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Match ETH_TYPE
+		const uint16_t eth_type_lacp = 0x8809;
+		if ((match = of1x_init_eth_type_match(eth_type_lacp)) == NULL) {
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_POLICY_ACL_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
+
+	//"Built-in Normal Ethernet VLAN"
+	{
+		of1x_flow_entry_t *entry;
+		of1x_match_t *match;
+
+		//Create flow entry
+		if ((entry = of1x_init_flow_entry(/*notify_removal=*/false, /*builtin=*/true)) == NULL) {
+			return ROFL_FAILURE;
+		}
+
+		entry->priority = 0;
+		entry->cookie = 0ULL;
+		entry->cookie_mask = 0ULL;
+		entry->flags = 0;
+		entry->timer_info.idle_timeout = 0;
+		entry->timer_info.hard_timeout = 0;
+
+		//Match TUNNEL_ID
+		if ((match = of1x_init_tunnel_id_match(/*tunnel_id=*/0, /*mask=*/OF1X_8_BYTE_MASK)) == NULL) {
+			return ROFL_FAILURE;
+		}
+		if (of1x_add_match_to_entry(entry, match) != ROFL_SUCCESS){
+			return ROFL_FAILURE;
+		}
+
+		//Instruction GOTO_TABLE
+		of1x_add_instruction_to_group(
+				&(entry->inst_grp),
+				OF1X_IT_GOTO_TABLE,
+				NULL,
+				NULL,
+				NULL,
+				/*go_to_table*/OFDPA_VLAN_FLOW_TABLE);
+
+		if (of1x_add_flow_entry_table(table->pipeline, table->number, &entry, false, true) != ROFL_OF1X_FM_SUCCESS){
+			return ROFL_FAILURE;
+		}
+	}
 
 	//"Built-in Normal Ethernet VLAN"
 	{
