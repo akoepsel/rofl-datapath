@@ -198,13 +198,13 @@ void __of1x_dump_instructions(of1x_instruction_group_t group, bool raw_nbo){
 	if( has_apply_actions ){
 		ROFL_PIPELINE_INFO("\t\t\tAPPLY.ACTIONs:");
 		__of1x_dump_action_group(group.instructions[OF1X_IT_APPLY_ACTIONS].apply_actions, raw_nbo);
-		ROFL_PIPELINE_INFO("\t\t\tnum_of_(output/group)_actions: %u", group.instructions[OF1X_IT_APPLY_ACTIONS].apply_actions.num_of_output_actions);
+		ROFL_PIPELINE_INFO("\t\t\tnum_of_(output/group)_actions: %u", group.instructions[OF1X_IT_APPLY_ACTIONS].apply_actions->num_of_output_actions);
 		ROFL_PIPELINE_INFO_NO_PREFIX("\n");
 	}
 	if( has_write_actions ){
 		ROFL_PIPELINE_INFO("\t\t\tWRITE.ACTIONs:");
 		__of1x_dump_write_actions(group.instructions[OF1X_IT_WRITE_ACTIONS].write_actions, raw_nbo);
-		ROFL_PIPELINE_INFO("\t\t\tnum_of_(output/group)_actions: %u", group.instructions[OF1X_IT_WRITE_ACTIONS].write_actions.num_of_output_actions);
+		ROFL_PIPELINE_INFO("\t\t\tnum_of_(output/group)_actions: %u", group.instructions[OF1X_IT_WRITE_ACTIONS].write_actions->num_of_output_actions);
 		ROFL_PIPELINE_INFO_NO_PREFIX("\n");
 	}	
 }
