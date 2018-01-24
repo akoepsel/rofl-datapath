@@ -1466,6 +1466,7 @@ rofl_result_t __ofdpa_set_egress_vlan_table_defaults(of1x_flow_table_t* table){
 
 	//Match
 	bitmap128_clean(&table->config.match);
+	bitmap128_set(&table->config.match, OF1X_MATCH_OFDPA_ALLOW_VLAN_TRANSLATION);
 	bitmap128_set(&table->config.match, OF1X_MATCH_OFDPA_ACTSET_OUTPUT);
 	bitmap128_set(&table->config.match, OF1X_MATCH_VLAN_VID);
 	bitmap128_set(&table->config.match, OF1X_MATCH_ETH_TYPE);
