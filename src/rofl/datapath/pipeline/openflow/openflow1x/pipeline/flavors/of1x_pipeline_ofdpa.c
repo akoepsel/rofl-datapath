@@ -1034,8 +1034,8 @@ rofl_result_t __ofdpa_set_l3_type_table_defaults(of1x_flow_table_t* table){
 
 		//Match IPV6-DST ff00::0/ff00:0
 		uint128__t addr;
-		UINT128__T_HI(addr) = UINT64_C(0xff) << (7*8);
-		UINT128__T_LO(addr) = 0x0;
+		UINT128__T_HI(addr) = HTONB64(UINT64_C(0xff) << (7*8));
+		UINT128__T_LO(addr) = HTONB64(0x0);
 		if ((match = of1x_init_ip6_dst_match(addr, /*mask=*/addr))==NULL){
 			return ROFL_FAILURE;
 		}

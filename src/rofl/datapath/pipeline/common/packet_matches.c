@@ -377,20 +377,20 @@ void dump_packet_matches(datapacket_t *const pkt, bool raw_nbo){
 		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_ADDRESS_3:0x%"PRIx64", ", tmp);
 	}
 
-	//GTP
+	//GRE
 	if(m->__ip_proto == IP_PROTO_GRE){
 		ROFL_PIPELINE_INFO_NO_PREFIX("GRE_VERSION:0x%x, GRE_PROT_TYPE:0x%x, GRE_KEY:0x%x, ",COND_NTOHB16(raw_nbo, m->__gre_version), COND_NTOHB16(raw_nbo, m->__gre_prot_type), COND_NTOHB32(raw_nbo, m->__gre_key));
 	}
 
 	//OFDPA
-	if (m->__ofdpa_vrf)
+	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
 		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_VRF:0x%x,", COND_NTOHB16(raw_nbo, m->__ofdpa_vrf));
-	if (m->__ofdpa_ovid)
+	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
 		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OVID:0x%x,", COND_NTOHB16(raw_nbo, m->__ofdpa_ovid));
-	if (m->__ofdpa_allow_vlan_translation)
-		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_ALLOW_VLAN_TRANSLATION:%u,", m->__ofdpa_allow_vlan_translation);
-	if (m->__ofdpa_action_set_output_egress_portno)
-		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OVID:0x%x,", COND_NTOHB32(raw_nbo, m->__ofdpa_action_set_output_egress_portno));
+	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
+		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_ALLOW_VLAN_TRANSLATION:0x%x,", m->__ofdpa_allow_vlan_translation);
+	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
+		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OUTPUT_EGRESS_PORTNO:0x%x,", COND_NTOHB32(raw_nbo, m->__ofdpa_action_set_output_egress_portno));
 #endif
 	
 	ROFL_PIPELINE_INFO_NO_PREFIX("}\n");	
