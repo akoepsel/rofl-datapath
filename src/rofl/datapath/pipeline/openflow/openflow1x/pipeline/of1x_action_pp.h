@@ -685,8 +685,10 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 				pkt_to_send->__action_set_output_egress_portno = pkt->__action_set_output_egress_portno;
 				ROFL_PIPELINE_INFO("Packet[%p] was cloned into [%p] during OUTPUT action\n", pkt, pkt_to_send);
 				
-			}else
+			}else{
 				pkt_to_send = pkt;
+				pkt->pkt_was_sent = true;
+			}
 
 			//Perform output
 			if( port_id < LOGICAL_SWITCH_MAX_LOG_PORTS && unlikely(NULL != sw->logical_ports[port_id].port) ){
