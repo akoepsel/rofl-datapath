@@ -1880,7 +1880,7 @@ void __of1x_dump_matches(of1x_match_t* matches, bool raw_nbo){
 				break; 
 			case OF1X_MATCH_IP_DSCP:  ROFL_PIPELINE_INFO_NO_PREFIX("[IP_DSCP:0x%x], ",__of1x_get_match_val8(it, false, raw_nbo));
 				break; 
-			case OF1X_MATCH_IP_PROTO:  ROFL_PIPELINE_INFO_NO_PREFIX("[IP_PROTO:%u|0x%x], ",__of1x_get_match_val8(it, false, raw_nbo),__of1x_get_match_val8(it, true, raw_nbo));
+			case OF1X_MATCH_IP_PROTO:  ROFL_PIPELINE_INFO_NO_PREFIX("[IP_PROTO:0x%x(%u)|0x%x], ",__of1x_get_match_val8(it, false, raw_nbo),__of1x_get_match_val8(it, false, raw_nbo),__of1x_get_match_val8(it, true, raw_nbo));
 				break; 
 
 			case OF1X_MATCH_IPV4_SRC:
