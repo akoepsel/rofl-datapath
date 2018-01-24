@@ -31,7 +31,7 @@ static inline bool  __of1x_process_instructions_must_replicate(const of1x_instru
 }
 
 /* Process instructions */
-static inline unsigned int __of1x_process_instructions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t *pkt, const of1x_instruction_group_t* instructions){
+static inline unsigned int __of1x_process_instructions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t *pkt, const of1x_instruction_group_t* instructions, bool *pkt_was_sent){
 
 	of1x_instruction_t* inst = (of1x_instruction_t*)&instructions->instructions[OF1X_IT_APPLY_ACTIONS]; 
 
@@ -41,7 +41,7 @@ static inline unsigned int __of1x_process_instructions(const unsigned int tid, c
 
 	//Check all instructions in order
 	if(inst->type == OF1X_IT_APPLY_ACTIONS)
-		__of1x_process_apply_actions(tid, sw, table_id, pkt, inst->apply_actions, __of1x_process_instructions_must_replicate(instructions), NULL); 
+		__of1x_process_apply_actions(tid, sw, table_id, pkt, inst->apply_actions, __of1x_process_instructions_must_replicate(instructions), NULL, pkt_was_sent);
 
 	//Next instruction
 	inst++; 

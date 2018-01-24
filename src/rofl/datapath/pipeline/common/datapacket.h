@@ -77,12 +77,6 @@ typedef struct datapacket{
 	uint32_t __action_set_output_egress_portno;
 
 	/**
-	* Flag indicating if this packet was sent out or needs
-	* deallocation of allocated resources
-	*/
-	bool pkt_was_sent;
-
-	/**
 	* Flag indicating if it is a replica of the original packet
 	* (used for multi-output matches)
 	*/
@@ -101,7 +95,6 @@ typedef struct datapacket{
 }datapacket_t;
 
 static inline void __init_packet_metadata(datapacket_t *const pkt){
-	pkt->pkt_was_sent = false;
 	pkt->__metadata = 0ULL;
 	pkt->__cookie = 0ULL;
 	pkt->__tunnel_id = 0ULL;

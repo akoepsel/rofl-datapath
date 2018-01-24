@@ -96,10 +96,10 @@ static inline void __of1x_clear_write_actions(of1x_write_actions_t* pkt_write_ac
 }
 
 //fwd decl
-static inline void __of1x_process_apply_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, const of1x_action_group_t* apply_actions_group, bool replicate_pkts, datapacket_t** reinject_pkt);
+static inline void __of1x_process_apply_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, const of1x_action_group_t* apply_actions_group, bool replicate_pkts, datapacket_t** reinject_pkt, bool *pkt_was_sent);
 
 //Process all actions from a group
-static inline void __of1x_process_group_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t *pkt, uint64_t field, of1x_group_t *group, bool replicate_pkts){
+static inline void __of1x_process_group_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t *pkt, uint64_t field, of1x_group_t *group, bool replicate_pkts, bool *pkt_was_sent){
 	datapacket_t* pkt_replica;
 	of1x_bucket_t *it_bk;
 	
@@ -124,7 +124,7 @@ static inline void __of1x_process_group_actions(const unsigned int tid, const st
 				} 
 				
 				//Process all actions in the bucket
-				__of1x_process_apply_actions(tid, sw, table_id, pkt_replica, it_bk->actions, it_bk->actions->num_of_output_actions > 1, NULL); //No replica
+				__of1x_process_apply_actions(tid, sw, table_id, pkt_replica, it_bk->actions, it_bk->actions->num_of_output_actions > 1, NULL, pkt_was_sent); //No replica
 				__of1x_stats_bucket_update(tid, &it_bk->stats, platform_packet_get_size_bytes(pkt));
 				
 				if(it_bk->actions->num_of_output_actions > 1){
@@ -139,7 +139,7 @@ static inline void __of1x_process_group_actions(const unsigned int tid, const st
 			break;
 		case OF1X_GROUP_TYPE_INDIRECT:
 			//executes the "one bucket defined"
-			__of1x_process_apply_actions(tid, sw,table_id,pkt,group->bc_list->head->actions, replicate_pkts, NULL);
+			__of1x_process_apply_actions(tid, sw,table_id,pkt,group->bc_list->head->actions, replicate_pkts, NULL, pkt_was_sent);
 			__of1x_stats_bucket_update(tid, &group->bc_list->head->stats, platform_packet_get_size_bytes(pkt));
 			break;
 		case OF1X_GROUP_TYPE_FF:
@@ -157,7 +157,7 @@ static inline void __of1x_process_group_actions(const unsigned int tid, const st
 }
 
 /* Contains switch with all the different action functions */
-static inline void __of1x_process_packet_action(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, of1x_packet_action_t* action, bool replicate_pkts, datapacket_t** reinject_pkt){
+static inline void __of1x_process_packet_action(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, of1x_packet_action_t* action, bool replicate_pkts, datapacket_t** reinject_pkt, bool *pkt_was_sent){
 
 	uint32_t port_id;
 
@@ -654,7 +654,7 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 			break;
 
 		case OF1X_AT_GROUP:
-			__of1x_process_group_actions(tid, sw, table_id, pkt, action->__field.u32, action->group, replicate_pkts);
+			__of1x_process_group_actions(tid, sw, table_id, pkt, action->__field.u32, action->group, replicate_pkts, pkt_was_sent);
 			break;
 
 		case OF1X_AT_EXPERIMENTER: //FIXME: implement
@@ -701,36 +701,29 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 #ifdef DEBUG
                     			dump_packet_matches(pkt_to_send, false);
 #endif
-                    //No replicated packet, platform will release packet afterwards
-					if (pkt_to_send==pkt)
-						pkt->pkt_was_sent = true;
+                    *pkt_was_sent = true;
 					ROFL_PIPELINE_INFO("Packet[%p] outputting to port num. %u\n", pkt_to_send, port_id);
 					platform_packet_output(pkt_to_send, sw->logical_ports[port_id].port);
 				}
 
 			}else if(port_id == OF1X_PORT_FLOOD){
-				//No replicated packet, platform will release packet afterwards
-				if (pkt_to_send==pkt)
-					pkt->pkt_was_sent = true;
+				*pkt_was_sent = true;
 				//Flood
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to FLOOD\n", pkt_to_send);
 				platform_packet_output(pkt_to_send, flood_meta_port);
 			}else if(port_id == OF1X_PORT_CONTROLLER ||
+				//Packet will be released by Packet-In logic
 				port_id == OF1X_PORT_NORMAL){
 				//Controller
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to CONTROLLER\n", pkt_to_send);
 				platform_of1x_packet_in(sw, table_id, pkt_to_send, action->send_len, OF1X_PKT_IN_ACTION);
 			}else if(port_id == OF1X_PORT_ALL){
-				//No replicated packet, platform will release packet afterwards
-				if (pkt_to_send==pkt)
-					pkt->pkt_was_sent = true;
+				*pkt_was_sent = true;
 				//All
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to ALL_PORT\n", pkt_to_send);
 				platform_packet_output(pkt_to_send, all_meta_port);
 			}else if(port_id == OF1X_PORT_IN_PORT){
-				//No replicated packet, platform will release packet afterwards
-				if (pkt_to_send==pkt)
-					pkt->pkt_was_sent = true;
+				*pkt_was_sent = true;
 				//in port
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to IN_PORT\n", pkt_to_send);
 				platform_packet_output(pkt_to_send, in_port_meta_port);
@@ -745,9 +738,7 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 					ROFL_PIPELINE_INFO("ERROR: packet[%p->%p] trying to execute an output to meta-port 'TABLE' from a non-PKT_OUT action list.\n", pkt, pkt_to_send);
 					assert(0);	
 				}
-				//No replicated packet, platform will release packet afterwards
-				if (pkt_to_send==pkt)
-					pkt->pkt_was_sent = true;
+				*pkt_was_sent = true;
 				platform_packet_output(pkt_to_send, in_port_meta_port);
 			}else{
 				//This condition can only happen when flowmods are left for ports that are non-existent anymore
@@ -764,12 +755,12 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 
 
 //Process apply actions
-static inline void __of1x_process_apply_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, const of1x_action_group_t* apply_actions_group, bool replicate_pkts, datapacket_t** reinject_pkt){
+static inline void __of1x_process_apply_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, const of1x_action_group_t* apply_actions_group, bool replicate_pkts, datapacket_t** reinject_pkt, bool *pkt_was_sent){
 
 	of1x_packet_action_t* it;
 
 	for(it=apply_actions_group->head;it;it=it->next){
-		__of1x_process_packet_action(tid, sw, table_id, pkt, it, replicate_pkts, reinject_pkt);
+		__of1x_process_packet_action(tid, sw, table_id, pkt, it, replicate_pkts, reinject_pkt, pkt_was_sent);
 	}	
 }
 
@@ -777,7 +768,7 @@ static inline void __of1x_process_apply_actions(const unsigned int tid, const st
 * The of1x_process_write_actions is meant to encapsulate the processing of the write actions
 *
 */
-static inline void __of1x_process_write_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, bool replicate_pkts){
+static inline void __of1x_process_write_actions(const unsigned int tid, const struct of1x_switch* sw, const unsigned int table_id, datapacket_t* pkt, bool replicate_pkts, bool *pkt_was_sent){
 
 	unsigned int i,j;
 
@@ -786,7 +777,7 @@ static inline void __of1x_process_write_actions(const unsigned int tid, const st
 	for(i=0,j=0;(i<write_actions->num_of_actions) && (j < OF1X_AT_NUMBER);j++){
 		if( bitmap128_is_bit_set(&write_actions->bitmap,j) ){
 			//Process action
-			__of1x_process_packet_action(tid, sw, table_id, pkt, &write_actions->actions[j], replicate_pkts, NULL);	
+			__of1x_process_packet_action(tid, sw, table_id, pkt, &write_actions->actions[j], replicate_pkts, NULL, pkt_was_sent);
 			i++;		
 		}
 	}

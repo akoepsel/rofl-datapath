@@ -55,6 +55,7 @@ static inline void __of1x_process_packet_pipeline_generic(const unsigned int tid
 	unsigned int i, table_to_go, num_of_outputs;
 	of1x_flow_table_t* table;
 	of1x_flow_entry_t* match;
+	bool pkt_was_sent = false;
 	
 	//Initialize packet for OF1.X pipeline processing 
 	__init_packet_metadata(pkt);
@@ -95,7 +96,7 @@ static inline void __of1x_process_packet_pipeline_generic(const unsigned int tid
 			__of1x_stats_flow_update_match(tid, &match->stats, platform_packet_get_size_bytes(pkt));
 
 			//Process instructions
-			table_to_go = __of1x_process_instructions(tid, (of1x_switch_t*)sw, i, pkt, &match->inst_grp);
+			table_to_go = __of1x_process_instructions(tid, (of1x_switch_t*)sw, i, pkt, &match->inst_grp, &pkt_was_sent);
 
 			if(table_to_go > i && likely(table_to_go < OF1X_MAX_FLOWTABLES)){
 
@@ -113,7 +114,7 @@ static inline void __of1x_process_packet_pipeline_generic(const unsigned int tid
 			}
 
 			//Process WRITE actions
-			__of1x_process_write_actions(tid, (of1x_switch_t*)sw, i, pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
+			__of1x_process_write_actions(tid, (of1x_switch_t*)sw, i, pkt, __of1x_process_instructions_must_replicate(&match->inst_grp), &pkt_was_sent);
 
 			//Recover the num_of_outputs to release the lock asap
 			num_of_outputs = match->inst_grp.num_of_outputs;
@@ -173,6 +174,7 @@ static inline void __of1x_process_packet_out_pipeline_generic(const unsigned int
 	bool has_multiple_outputs=false;
 	datapacket_t* reinject_pkt=NULL;
 	of1x_group_table_t *gt = sw->pipeline.groups;
+	bool pkt_was_sent = false;
 
 	//Validate apply_actions_group
 	__of1x_validate_action_group(NULL, (of1x_action_group_t*)apply_actions_group, gt, true);
@@ -194,7 +196,7 @@ static inline void __of1x_process_packet_out_pipeline_generic(const unsigned int
 	
 
 	//Just process the action group
-	__of1x_process_apply_actions(tid, (of1x_switch_t*)sw, 0, pkt, apply_actions_group, has_multiple_outputs, &reinject_pkt);
+	__of1x_process_apply_actions(tid, (of1x_switch_t*)sw, 0, pkt, apply_actions_group, has_multiple_outputs, &reinject_pkt, &pkt_was_sent);
 
 	//Reinject if necessary
 	if(reinject_pkt)

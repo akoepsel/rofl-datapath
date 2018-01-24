@@ -57,6 +57,7 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 	of1x_flow_table_t* table;
 	of1x_flow_entry_t* match;
 	unsigned int j;
+	bool pkt_was_sent = false;
 	
 	//Initialize packet for OF1.X pipeline processing 
 	__init_packet_metadata(pkt);
@@ -100,7 +101,7 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 			__of1x_stats_flow_update_match(tid, &match->stats, platform_packet_get_size_bytes(pkt));
 
 			//Process instructions
-			table_to_go = __of1x_process_instructions(tid, (of1x_switch_t*)sw, table->number, pkt, &match->inst_grp);
+			table_to_go = __of1x_process_instructions(tid, (of1x_switch_t*)sw, table->number, pkt, &match->inst_grp, &pkt_was_sent);
 
 			if((table_to_go > table->number) && likely(table_to_go < OF1X_MAX_FLOWTABLES) && bitmap256_is_bit_set(&(table->config.goto_tables), table_to_go)){
 
@@ -130,7 +131,7 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 			ROFL_PIPELINE_INFO("Packet[%p] before applying write actions, must_replicate=%u\n",pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
 
 			//Process WRITE actions
-			__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, /*enforce packet replication*/true);
+			__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, /*enforce packet replication due to chained group mod entries*/true, &pkt_was_sent);
 			//__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
 
 			//Recover the num_of_outputs to release the lock asap
@@ -148,8 +149,8 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 			//multiple output actions
 			//ROFL_PIPELINE_INFO("Packet[%p] after applying write actions, num_of_outputs=%u\n",pkt, num_of_outputs);
 			//if(num_of_outputs != 1)
-			ROFL_PIPELINE_INFO("Packet[%p] after applying write actions, pkt->pkt_was_sent=%u\n",pkt, pkt->pkt_was_sent);
-			if(pkt->pkt_was_sent==false)
+			ROFL_PIPELINE_INFO("Packet[%p] after applying write actions, pkt->pkt_was_sent=%u\n",pkt, pkt_was_sent);
+			if(pkt_was_sent==false)
 				platform_packet_drop(pkt);
 
 			return;
@@ -197,6 +198,7 @@ static inline void __of1x_process_packet_out_pipeline_ofdpa(const unsigned int t
 	bool has_multiple_outputs=false;
 	datapacket_t* reinject_pkt=NULL;
 	of1x_group_table_t *gt = sw->pipeline.groups;
+	bool pkt_was_sent = false;
 
 	//Validate apply_actions_group
 	__of1x_validate_action_group(NULL, (of1x_action_group_t*)apply_actions_group, gt, true);
@@ -218,7 +220,7 @@ static inline void __of1x_process_packet_out_pipeline_ofdpa(const unsigned int t
 	
 
 	//Just process the action group
-	__of1x_process_apply_actions(tid, (of1x_switch_t*)sw, 0, pkt, apply_actions_group, has_multiple_outputs, &reinject_pkt);
+	__of1x_process_apply_actions(tid, (of1x_switch_t*)sw, 0, pkt, apply_actions_group, has_multiple_outputs, &reinject_pkt, &pkt_was_sent);
 
 	//Reinject if necessary
 	if(reinject_pkt)
