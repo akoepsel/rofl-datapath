@@ -685,10 +685,8 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 				pkt_to_send->__action_set_output_egress_portno = pkt->__action_set_output_egress_portno;
 				ROFL_PIPELINE_INFO("Packet[%p] was cloned into [%p] during OUTPUT action\n", pkt, pkt_to_send);
 				
-			}else{
+			}else
 				pkt_to_send = pkt;
-				pkt->pkt_was_sent = true;
-			}
 
 			//Perform output
 			if( port_id < LOGICAL_SWITCH_MAX_LOG_PORTS && unlikely(NULL != sw->logical_ports[port_id].port) ){
@@ -703,11 +701,17 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 #ifdef DEBUG
                     			dump_packet_matches(pkt_to_send, false);
 #endif
+                    //No replicated packet, platform will release packet afterwards
+					if (pkt_to_send==pkt)
+						pkt->pkt_was_sent = true;
 					ROFL_PIPELINE_INFO("Packet[%p] outputting to port num. %u\n", pkt_to_send, port_id);
 					platform_packet_output(pkt_to_send, sw->logical_ports[port_id].port);
 				}
 
 			}else if(port_id == OF1X_PORT_FLOOD){
+				//No replicated packet, platform will release packet afterwards
+				if (pkt_to_send==pkt)
+					pkt->pkt_was_sent = true;
 				//Flood
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to FLOOD\n", pkt_to_send);
 				platform_packet_output(pkt_to_send, flood_meta_port);
@@ -717,10 +721,16 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to CONTROLLER\n", pkt_to_send);
 				platform_of1x_packet_in(sw, table_id, pkt_to_send, action->send_len, OF1X_PKT_IN_ACTION);
 			}else if(port_id == OF1X_PORT_ALL){
+				//No replicated packet, platform will release packet afterwards
+				if (pkt_to_send==pkt)
+					pkt->pkt_was_sent = true;
 				//All
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to ALL_PORT\n", pkt_to_send);
 				platform_packet_output(pkt_to_send, all_meta_port);
 			}else if(port_id == OF1X_PORT_IN_PORT){
+				//No replicated packet, platform will release packet afterwards
+				if (pkt_to_send==pkt)
+					pkt->pkt_was_sent = true;
 				//in port
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to IN_PORT\n", pkt_to_send);
 				platform_packet_output(pkt_to_send, in_port_meta_port);
@@ -735,6 +745,9 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 					ROFL_PIPELINE_INFO("ERROR: packet[%p->%p] trying to execute an output to meta-port 'TABLE' from a non-PKT_OUT action list.\n", pkt, pkt_to_send);
 					assert(0);	
 				}
+				//No replicated packet, platform will release packet afterwards
+				if (pkt_to_send==pkt)
+					pkt->pkt_was_sent = true;
 				platform_packet_output(pkt_to_send, in_port_meta_port);
 			}else{
 				//This condition can only happen when flowmods are left for ports that are non-existent anymore
