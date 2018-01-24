@@ -146,8 +146,9 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 
 			//Drop packet Only if there has been copy(cloning of the packet) due to
 			//multiple output actions
-			ROFL_PIPELINE_INFO("Packet[%p] after applying write actions, num_of_outputs=%u\n",pkt, num_of_outputs);
+			//ROFL_PIPELINE_INFO("Packet[%p] after applying write actions, num_of_outputs=%u\n",pkt, num_of_outputs);
 			//if(num_of_outputs != 1)
+			ROFL_PIPELINE_INFO("Packet[%p] after applying write actions, pkt->pkt_was_sent=%u\n",pkt, pkt->pkt_was_sent);
 			if(pkt->pkt_was_sent==false)
 				platform_packet_drop(pkt);
 
