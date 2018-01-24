@@ -798,7 +798,7 @@ static void __of1x_dump_packet_action(of1x_packet_action_t* action, bool raw_nbo
 		case OF1X_AT_SET_FIELD_ETH_TYPE:ROFL_PIPELINE_INFO_NO_PREFIX("SET_ETH_TYPE: 0x%x", __of1x_get_packet_action_field16(action, raw_nbo));
 			break;
 
-		case OF1X_AT_SET_FIELD_VLAN_VID:ROFL_PIPELINE_INFO_NO_PREFIX("SET_VLAN_VID: 0x%x", __of1x_get_packet_action_field16(action, raw_nbo));
+		case OF1X_AT_SET_FIELD_VLAN_VID:ROFL_PIPELINE_INFO_NO_PREFIX("SET_VLAN_VID: 0x%x(%u)", __of1x_get_packet_action_field16(action, raw_nbo),__of1x_get_packet_action_field16(action, raw_nbo));
 			break;
 		case OF1X_AT_SET_FIELD_VLAN_PCP:ROFL_PIPELINE_INFO_NO_PREFIX("SET_VLAN_PCP: 0x%x", __of1x_get_packet_action_field8(action, raw_nbo));
 			break;
