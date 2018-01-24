@@ -714,6 +714,7 @@ static inline void __of1x_process_packet_action(const unsigned int tid, const st
 			}else if(port_id == OF1X_PORT_CONTROLLER ||
 				//Packet will be released by Packet-In logic
 				port_id == OF1X_PORT_NORMAL){
+				*pkt_was_sent = true;
 				//Controller
 				ROFL_PIPELINE_INFO("Packet[%p] outputting to CONTROLLER\n", pkt_to_send);
 				platform_of1x_packet_in(sw, table_id, pkt_to_send, action->send_len, OF1X_PKT_IN_ACTION);
