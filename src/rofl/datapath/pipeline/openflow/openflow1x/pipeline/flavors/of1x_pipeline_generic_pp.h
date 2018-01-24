@@ -63,7 +63,7 @@ static inline void __of1x_process_packet_pipeline_generic(const unsigned int tid
 	//Mark packet as being processed by this sw
 	pkt->sw = sw;
 	
-	ROFL_PIPELINE_INFO("Packet[%p] entering switch %s [%p] pipeline (1.X)\n",pkt,sw->name, sw);	
+	ROFL_PIPELINE_INFO("Packet[%p] entering switch %s [%p] generic pipeline (1.X)\n",pkt,sw->name, sw);
 
 	for(i=OF1X_FIRST_FLOW_TABLE_INDEX; i < ((of1x_switch_t*)sw)->pipeline.num_of_tables ; i++){
 

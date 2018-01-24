@@ -65,7 +65,7 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 	//Mark packet as being processed by this sw
 	pkt->sw = sw;
 	
-	ROFL_PIPELINE_INFO("Packet[%p] entering switch %s [%p] pipeline (1.X)\n",pkt,sw->name, sw);	
+	ROFL_PIPELINE_INFO("Packet[%p] entering switch %s [%p] OF-DPA pipeline (1.X)\n",pkt,sw->name, sw);
 
 	i = ((of1x_switch_t*)sw)->pipeline.first_table_index;
 

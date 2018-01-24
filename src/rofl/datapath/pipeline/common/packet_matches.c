@@ -351,13 +351,13 @@ void dump_packet_matches(datapacket_t *const pkt, bool raw_nbo){
 
 	//WLAN
 	if(m->__wlan_fc)
-		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_FC:0x%x,", COND_NTOHB16(raw_nbo, m->__wlan_fc));
+		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_FC:0x%x, ", COND_NTOHB16(raw_nbo, m->__wlan_fc));
 	if(m->__wlan_type)
-		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_TYPE:%u,", m->__wlan_type);
+		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_TYPE:%u, ", m->__wlan_type);
 	if(m->__wlan_subtype)
-		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_SUBTYPE:%u,", m->__wlan_type);
+		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_SUBTYPE:%u, ", m->__wlan_type);
 	if(m->__wlan_direction)
-		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_DIRECTION:%u,", m->__wlan_direction);
+		ROFL_PIPELINE_INFO_NO_PREFIX("WLAN_DIRECTION:%u, ", m->__wlan_direction);
 	if(m->__wlan_address_1){
 		uint64_t tmp = m->__wlan_address_1;
 		if(!raw_nbo)
@@ -384,13 +384,13 @@ void dump_packet_matches(datapacket_t *const pkt, bool raw_nbo){
 
 	//OFDPA
 	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
-		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_VRF:0x%x,", COND_NTOHB16(raw_nbo, m->__ofdpa_vrf));
+		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_VRF:0x%x, ", COND_NTOHB16(raw_nbo, m->__ofdpa_vrf));
 	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
-		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OVID:0x%x,", COND_NTOHB16(raw_nbo, m->__ofdpa_ovid));
+		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OVID:0x%x, ", COND_NTOHB16(raw_nbo, m->__ofdpa_ovid));
 	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
-		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_ALLOW_VLAN_TRANSLATION:0x%x,", m->__ofdpa_allow_vlan_translation);
+		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_ALLOW_VLAN_TRANSLATION:0x%x, ", m->__ofdpa_allow_vlan_translation);
 	if (pkt->sw && pkt->sw->sw_flavor==SW_FLAVOR_OFDPA)
-		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OUTPUT_EGRESS_PORTNO:0x%x,", COND_NTOHB32(raw_nbo, m->__ofdpa_action_set_output_egress_portno));
+		ROFL_PIPELINE_INFO_NO_PREFIX("OFDPA_OUTPUT_EGRESS_PORTNO:0x%x, ", COND_NTOHB32(raw_nbo, m->__ofdpa_action_set_output_egress_portno));
 #endif
 	
 	ROFL_PIPELINE_INFO_NO_PREFIX("}\n");	
