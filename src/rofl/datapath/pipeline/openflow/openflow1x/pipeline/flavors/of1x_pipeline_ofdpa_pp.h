@@ -53,7 +53,7 @@ ROFL_BEGIN_DECLS
 static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, const of_switch_t *sw, datapacket_t *const pkt){
 
 	//Loop over tables
-	unsigned int i, table_to_go, num_of_outputs;
+	unsigned int i, table_to_go;//, num_of_outputs;
 	of1x_flow_table_t* table;
 	of1x_flow_entry_t* match;
 	unsigned int j;
@@ -134,7 +134,7 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 			//__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
 
 			//Recover the num_of_outputs to release the lock asap
-			num_of_outputs = match->inst_grp.num_of_outputs;
+			//num_of_outputs = match->inst_grp.num_of_outputs;
 
 #ifdef ROFL_PIPELINE_LOCKLESS
 			//Unmark core presence in the table
