@@ -130,8 +130,8 @@ static inline void __of1x_process_packet_pipeline_ofdpa(const unsigned int tid, 
 			ROFL_PIPELINE_INFO("Packet[%p] before applying write actions, must_replicate=%u\n",pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
 
 			//Process WRITE actions
-			//__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, /*enforce packet replication*/true);
-			__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
+			__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, /*enforce packet replication*/true);
+			//__of1x_process_write_actions(tid, (of1x_switch_t*)sw, table->number, pkt, __of1x_process_instructions_must_replicate(&match->inst_grp));
 
 			//Recover the num_of_outputs to release the lock asap
 			num_of_outputs = match->inst_grp.num_of_outputs;
