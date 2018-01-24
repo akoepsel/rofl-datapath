@@ -996,7 +996,7 @@ static void __of1x_dump_packet_action(of1x_packet_action_t* action, bool raw_nbo
 		case OF1X_AT_SET_FIELD_OFDPA_ALLOW_VLAN_TRANSLATION:ROFL_PIPELINE_INFO_NO_PREFIX("SET_OFDPA_ALLOW_VLAN_TRANSLATION: 0x%x", __of1x_get_packet_action_field8(action, raw_nbo));
 			break;
 
-		case OF1X_AT_GROUP:ROFL_PIPELINE_INFO_NO_PREFIX("GROUP:%u", __of1x_get_packet_action_field32(action, raw_nbo));
+		case OF1X_AT_GROUP:ROFL_PIPELINE_INFO_NO_PREFIX("GROUP:0x%x", __of1x_get_packet_action_field32(action, raw_nbo));
 			break;
 
 		case OF1X_AT_EXPERIMENTER:ROFL_PIPELINE_INFO_NO_PREFIX("EXPERIMENTER");
